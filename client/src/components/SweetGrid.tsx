@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import SweetCard from "./SweetCard";
+import EnhancedSearch from "./EnhancedSearch";
+import { SweetGridSkeleton } from "./LoadingStates";
+import { StaggerContainer, StaggerItem } from "./PageTransition";
 import { Filter, SortAsc, Package } from "lucide-react";
 
 interface Sweet {
@@ -60,22 +62,7 @@ export default function SweetGrid({ sweets, onPurchase, onViewDetails, isLoading
   const lowStockCount = sweets.filter(sweet => sweet.quantity > 0 && sweet.quantity <= 5).length;
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="aspect-square bg-muted rounded-md mb-4"></div>
-                <div className="h-4 bg-muted rounded mb-2"></div>
-                <div className="h-3 bg-muted rounded mb-2 w-3/4"></div>
-                <div className="h-6 bg-muted rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
+    return <SweetGridSkeleton />;
   }
 
   return (
@@ -90,13 +77,14 @@ export default function SweetGrid({ sweets, onPurchase, onViewDetails, isLoading
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-medium">Search</label>
-              <Input
-                placeholder="Search sweets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                data-testid="input-search-grid"
+              <EnhancedSearch
+                sweets={sweets}
+                onSearch={setSearchQuery}
+                placeholder="Search sweets, categories, descriptions..."
+                showSuggestions={true}
+                data-testid="enhanced-search-grid"
               />
             </div>
 
@@ -188,16 +176,21 @@ export default function SweetGrid({ sweets, onPurchase, onViewDetails, isLoading
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-testid="grid-sweets">
-          {filteredSweets.map((sweet) => (
-            <SweetCard
-              key={sweet.id}
-              {...sweet}
-              onPurchase={onPurchase}
-              onViewDetails={onViewDetails}
-            />
+        <StaggerContainer 
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+          data-testid="grid-sweets"
+          staggerDelay={0.05}
+        >
+          {filteredSweets.map((sweet, index) => (
+            <StaggerItem key={sweet.id} delay={index * 0.02}>
+              <SweetCard
+                {...sweet}
+                onPurchase={onPurchase}
+                onViewDetails={onViewDetails}
+              />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       )}
     </div>
   );

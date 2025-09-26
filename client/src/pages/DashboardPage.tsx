@@ -19,9 +19,11 @@ interface DashboardPageProps {
   sweets: Sweet[];
   cartItems: string[];
   favoriteItems: string[];
+  showFavorites?: boolean;
   onPurchase: (id: string) => void;
   onViewDetails: (id: string) => void;
   onToggleFavorite: (id: string) => void;
+  onToggleShowFavorites?: () => void;
 }
 
 export default function DashboardPage(props: DashboardPageProps) {

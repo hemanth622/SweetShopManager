@@ -11,6 +11,8 @@ import {
   Filter
 } from "lucide-react";
 import SweetGrid from "./SweetGrid";
+import { DashboardSkeleton } from "./LoadingStates";
+import { FadeIn, SlideIn, StaggerContainer, StaggerItem } from "./PageTransition";
 
 interface Sweet {
   id: string;
@@ -31,9 +33,12 @@ interface DashboardProps {
   sweets: Sweet[];
   cartItems: string[];
   favoriteItems: string[];
+  showFavorites?: boolean;
   onPurchase: (id: string) => void;
   onViewDetails: (id: string) => void;
   onToggleFavorite: (id: string) => void;
+  onToggleShowFavorites?: () => void;
+  isLoading?: boolean;
 }
 
 export default function Dashboard({ 
@@ -41,11 +46,15 @@ export default function Dashboard({
   sweets, 
   cartItems, 
   favoriteItems,
+  showFavorites: externalShowFavorites,
   onPurchase, 
   onViewDetails,
-  onToggleFavorite 
+  onToggleFavorite,
+  onToggleShowFavorites,
+  isLoading = false
 }: DashboardProps) {
-  const [showFavorites, setShowFavorites] = useState(false);
+  const [localShowFavorites, setLocalShowFavorites] = useState(false);
+  const showFavorites = externalShowFavorites !== undefined ? externalShowFavorites : localShowFavorites;
 
   const featuredSweets = sweets.filter(sweet => sweet.rating && sweet.rating >= 4.7).slice(0, 4);
   const newArrivals = sweets.slice(-4);
@@ -57,61 +66,71 @@ export default function Dashboard({
   const averageRating = sweets.reduce((sum, sweet) => sum + (sweet.rating || 0), 0) / sweets.length;
   const categoriesCount = new Set(sweets.map(sweet => sweet.category)).size;
 
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-6">
+      <SlideIn direction="down" className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-6">
         <div className="max-w-2xl">
-          <h1 className="text-3xl font-bold mb-2" data-testid="text-welcome">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2" data-testid="text-welcome">
             Welcome back, {user.username}! 🍭
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-base sm:text-lg">
             Discover delicious sweets and manage your candy cravings. 
             {user.isAdmin && " You have admin access to manage the store inventory."}
           </p>
         </div>
-      </div>
+      </SlideIn>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Available Products</p>
-                <p className="text-2xl font-bold" data-testid="stat-products">{totalProducts}</p>
+      <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-4" staggerDelay={0.1}>
+        <StaggerItem>
+          <Card className="hover-elevate transition-all duration-200">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Available Products</p>
+                  <p className="text-xl sm:text-2xl font-bold" data-testid="stat-products">{totalProducts}</p>
+                </div>
+                <Package className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
               </div>
-              <Package className="w-8 h-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </StaggerItem>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Average Rating</p>
-                <p className="text-2xl font-bold" data-testid="stat-rating">
-                  {averageRating.toFixed(1)} ⭐
-                </p>
+        <StaggerItem>
+          <Card className="hover-elevate transition-all duration-200">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Average Rating</p>
+                  <p className="text-xl sm:text-2xl font-bold" data-testid="stat-rating">
+                    {averageRating.toFixed(1)} ⭐
+                  </p>
+                </div>
+                <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
               </div>
-              <Star className="w-8 h-8 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </StaggerItem>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Categories</p>
-                <p className="text-2xl font-bold" data-testid="stat-categories">{categoriesCount}</p>
+        <StaggerItem>
+          <Card className="hover-elevate transition-all duration-200">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Categories</p>
+                  <p className="text-xl sm:text-2xl font-bold" data-testid="stat-categories">{categoriesCount}</p>
+                </div>
+                <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
               </div>
-              <TrendingUp className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+      </StaggerContainer>
 
       {/* Featured Products */}
       <Card>
@@ -199,26 +218,31 @@ export default function Dashboard({
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-4 justify-center">
+      <FadeIn delay={0.6} className="flex flex-col sm:flex-row items-center gap-4 justify-center">
         <Button
           variant={showFavorites ? "default" : "outline"}
-          onClick={() => setShowFavorites(!showFavorites)}
-          className="gap-2"
+          onClick={onToggleShowFavorites || (() => setLocalShowFavorites(!localShowFavorites))}
+          className="gap-2 w-full sm:w-auto"
           data-testid="button-toggle-favorites"
         >
           <Heart className={`w-4 h-4 ${showFavorites ? 'fill-current' : ''}`} />
-          {showFavorites ? 'Show All Products' : 'Show Favorites Only'}
+          <span className="hidden sm:inline">
+            {showFavorites ? 'Show All Products' : 'Show Favorites Only'}
+          </span>
+          <span className="sm:hidden">
+            {showFavorites ? 'All Products' : 'Favorites'}
+          </span>
         </Button>
 
         <Button
           variant="outline"
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto"
           data-testid="button-view-cart"
         >
           <ShoppingCart className="w-4 h-4" />
-          View Cart ({cartItems.length})
+          <span>Cart ({cartItems.length})</span>
         </Button>
-      </div>
+      </FadeIn>
 
       {/* All Products Grid */}
       <SweetGrid

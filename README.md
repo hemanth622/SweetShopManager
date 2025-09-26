@@ -4,6 +4,9 @@ Modern full-stack sweet shop management app built with Express, Vite + React, Ta
 
 ## Quick Start
 
+AI used :
+  Replit
+
 ```bash
 # 1) Install dependencies
 npm install
